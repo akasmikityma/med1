@@ -1,0 +1,46 @@
+"use client"
+
+import type React from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+import { PatientSidebarU } from "./PatientComps/PatientSidebar"
+import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar"
+
+export default function PatientLayout({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (status === "loading") return // Still loading
+    if (!session) {
+      router.push("/") // Redirect to landing page
+      return
+    }
+  }, [session, status, router])
+
+  // Show loading while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render if not authenticated
+  if (!session) {
+    return null
+  }
+
+  return (
+    <SidebarProvider>
+      <PatientSidebarU user={session.user} />
+      <SidebarInset>{children}</SidebarInset>
+    </SidebarProvider>
+  )
+}
