@@ -1,69 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState,useEffect } from "react"
 import { Calendar, Clock, User, Phone, Filter, CheckCircle, X, Eye } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-
+import { mockAppointments, Appointment } from "./Constants"
 // Mock appointments data
-const mockAppointments = [
-  {
-    id: 1,
-    patientName: "John Smith",
-    patientEmail: "john.smith@email.com",
-    patientPhone: "+1 (555) 123-4567",
-    doctorName: "Dr. Sarah Johnson",
-    specialty: "Cardiologist",
-    date: "2024-01-20",
-    time: "2:00 PM",
-    reason: "Regular checkup",
-    status: "pending",
-    type: "in-person",
-    notes: "Patient has history of heart disease",
-  },
-  {
-    id: 2,
-    patientName: "Emily Davis",
-    patientEmail: "emily.davis@email.com",
-    patientPhone: "+1 (555) 234-5678",
-    doctorName: "Dr. Michael Chen",
-    specialty: "Dermatologist",
-    date: "2024-01-20",
-    time: "10:30 AM",
-    reason: "Skin consultation",
-    status: "confirmed",
-    type: "video",
-    notes: "Follow-up for previous treatment",
-  },
-  {
-    id: 3,
-    patientName: "Robert Wilson",
-    patientEmail: "robert.wilson@email.com",
-    patientPhone: "+1 (555) 345-6789",
-    doctorName: "Dr. Emily Rodriguez",
-    specialty: "Pediatrician",
-    date: "2024-01-19",
-    time: "4:15 PM",
-    reason: "Child vaccination",
-    status: "completed",
-    type: "in-person",
-    notes: "Routine vaccination for 5-year-old",
-  },
-  {
-    id: 4,
-    patientName: "Lisa Anderson",
-    patientEmail: "lisa.anderson@email.com",
-    patientPhone: "+1 (555) 456-7890",
-    doctorName: "Dr. Sarah Johnson",
-    specialty: "Cardiologist",
-    date: "2024-01-21",
-    time: "11:00 AM",
-    reason: "Chest pain",
-    status: "cancelled",
-    type: "in-person",
-    notes: "Patient cancelled due to emergency",
-  },
-]
+
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -73,10 +16,48 @@ const statusColors = {
 }
 
 export default function AppointmentsPage() {
-  const [appointments, setAppointments] = useState(mockAppointments)
+  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments)
   const [filter, setFilter] = useState("all")
   const [selectedDate, setSelectedDate] = useState("")
 
+  useEffect(()=>{
+    const fetchAppointments = async()=>{
+      try{
+        const response = await fetch("/api/clinic/appointments",{
+          method: "GET",
+          headers :{
+            "Content-Type": "application/json",
+          }
+        })
+        if(!response.ok){
+           throw new Error("faild to fetch");
+        }
+        const data = await  response.json();
+        console.log(data);
+        const mappedAppointments = data.map((apt:Appointment)=>({
+          ...appointments,
+          id: apt.id,
+          patientName: apt.patientName,
+          patientEmail: apt.patientEmail,
+          patientPhone: apt.patientPhone,
+          doctorName: apt.doctorName,
+          specialty: apt.specialty,
+          date: apt.date,
+          time: apt.time,
+          reason: apt.reason,
+          status: apt.status,
+          type: apt.type,
+          notes: apt.notes,
+          }))
+          console.log(mappedAppointments)
+        setAppointments(mappedAppointments);
+      }catch(err){
+        console.log(err);
+      }
+    }
+
+    fetchAppointments();
+  },[])
   const filteredAppointments = appointments.filter((appointment) => {
     const matchesStatus = filter === "all" || appointment.status === filter
     const matchesDate = !selectedDate || appointment.date === selectedDate

@@ -29,7 +29,7 @@ export async function GET(req: Request){
             doctor:true
         }
     })
-
+    console.log(visits);
     return NextResponse.json(visits);
 }
 export async function POST(req:Request){

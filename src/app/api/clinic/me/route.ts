@@ -42,3 +42,23 @@ export async function GET() {
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
+export async function PUT(req: Request){
+  const session = await getServerSession(authOptions);
+  if (!session || session.user?.role !== 'CLINIC') {
+    return new NextResponse('Unauthorized', { status: 401 });
+  }
+  const {name, phone, location} = await req.json();
+  try{
+    const Updated_Clinic = await prisma.clinic.update({
+      where: {userId: session.user.id},
+      data: {name, phone, location}
+    })
+    if(!Updated_Clinic){
+      return new NextResponse('Clinic not found', { status: 404 });
+    }
+    return NextResponse.json(Updated_Clinic);
+  }catch(err){
+    console.log(err);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+}

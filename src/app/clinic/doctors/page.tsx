@@ -1,63 +1,56 @@
 "use client"
 
-import { useState } from "react"
+import { useState,useEffect } from "react"
 import { Plus, Search, Edit, Trash2, Star, Users } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-
-// Mock doctors data
-const mockDoctors = [
-  {
-    id: 1,
-    name: "Dr. Sarah Johnson",
-    email: "sarah.johnson@clinic.com",
-    phone: "+1 (555) 123-4567",
-    specialty: "Cardiologist",
-    experience: "15 years",
-    education: "MD - Harvard Medical School",
-    rating: 4.8,
-    totalAppointments: 1240,
-    status: "active",
-    image: "/placeholder.svg?height=80&width=80",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-    consultationFee: 150,
-  },
-  {
-    id: 2,
-    name: "Dr. Michael Chen",
-    email: "michael.chen@clinic.com",
-    phone: "+1 (555) 234-5678",
-    specialty: "Dermatologist",
-    experience: "12 years",
-    education: "MD - Johns Hopkins",
-    rating: 4.9,
-    totalAppointments: 890,
-    status: "active",
-    image: "/placeholder.svg?height=80&width=80",
-    workingDays: ["Monday", "Wednesday", "Friday", "Saturday"],
-    consultationFee: 120,
-  },
-  {
-    id: 3,
-    name: "Dr. Emily Rodriguez",
-    email: "emily.rodriguez@clinic.com",
-    phone: "+1 (555) 345-6789",
-    specialty: "Pediatrician",
-    experience: "10 years",
-    education: "MD - Mayo Clinic",
-    rating: 4.7,
-    totalAppointments: 1560,
-    status: "inactive",
-    image: "/placeholder.svg?height=80&width=80",
-    workingDays: ["Tuesday", "Thursday", "Friday", "Saturday"],
-    consultationFee: 100,
-  },
-]
+import { DoctorDefaults,DoctorsListDefaults } from "./Constants"
+import Link from "next/link"
 
 export default function DoctorsPage() {
-  const [doctors, setDoctors] = useState(mockDoctors)
+  const [doctors, setDoctors] = useState(DoctorsListDefaults);
   const [searchTerm, setSearchTerm] = useState("")
-  const [showAddModal, setShowAddModal] = useState(false)
+  const [isLoading, setIsLoading]  = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  useEffect(()=>{
+    const fetchDoctors = async ()=>{
+      try{
+        const response = await fetch("/api/clinic/doctors");
+        if(!response.ok){
+          throw new Error(`Failed to fetch the doctors : ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log("fetched doctors",data);
+
+        const mappedDoctors = data.map((doctor: any) => ({
+          ...DoctorDefaults,
+          id: doctor.id,
+          name: doctor.name || DoctorDefaults.name,
+          specialty: doctor.specialization || DoctorDefaults.specialty,
+          experience: doctor.experience || DoctorDefaults.experience,
+          education: doctor.qualifications || DoctorDefaults.education,
+          contact: doctor.contact || DoctorDefaults.contact,
+          // Map other fields as needed
+          // You can add default values for missing fields
+          email: doctor.email || DoctorDefaults.email,
+          phone: doctor.phone || DoctorDefaults.phone,
+          rating: doctor.rating || DoctorDefaults.rating,
+          totalAppointments: doctor.totalAppointments || DoctorDefaults.totalAppointments,
+          status: doctor.status || DoctorDefaults.status,
+          consultationFee: doctor.consultationFee || DoctorDefaults.consultationFee,
+        }))
+
+        setDoctors(mappedDoctors);
+      }catch(err){
+        console.error("Error fetching doctors : ",err);
+      }finally{
+        setIsLoading(false)
+      }
+    }  
+
+    fetchDoctors();
+  },[])
 
   const filteredDoctors = doctors.filter(
     (doctor) =>
@@ -209,16 +202,24 @@ export default function DoctorsPage() {
                   >
                     {doctor.status === "active" ? "Active" : "Inactive"}
                   </span>
-                  <button
-                    onClick={() => toggleDoctorStatus(doctor.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      doctor.status === "active"
-                        ? "bg-red-100 text-red-700 hover:bg-red-200"
-                        : "bg-green-100 text-green-700 hover:bg-green-200"
-                    }`}
-                  >
-                    {doctor.status === "active" ? "Deactivate" : "Activate"}
-                  </button>
+                  <div className="flex space-x-2">
+                    <Link
+                      href={`/clinic/doctors/${doctor.id}`}
+                      className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      View Profile
+                    </Link>
+                    <button
+                      onClick={() => toggleDoctorStatus(doctor.id)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        doctor.status === "active"
+                          ? "bg-red-100 text-red-700 hover:bg-red-200"
+                          : "bg-green-100 text-green-700 hover:bg-green-200"
+                      }`}
+                    >
+                      {doctor.status === "active" ? "Deactivate" : "Activate"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

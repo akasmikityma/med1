@@ -1,46 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Edit, Save, X, MapPin, Phone, Mail, Clock, Globe } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-
+import ClinicDefaults from "./Constants"
 export default function ClinicProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  
+  const [clinicData, setClinicData] = useState(ClinicDefaults);
 
-  const [clinicData, setClinicData] = useState({
-    name: "Heart Care Medical Center",
-    description:
-      "A leading healthcare facility specializing in comprehensive medical care with state-of-the-art equipment and experienced medical professionals.",
-    address: "123 Medical Plaza, Downtown District, City, State 12345",
-    phone: "+1 (555) 123-4567",
-    email: "info@heartcaremedical.com",
-    website: "www.heartcaremedical.com",
-    establishedYear: "2010",
-    licenseNumber: "HC-2010-12345",
-    operatingHours: {
-      monday: { open: "08:00", close: "18:00", isOpen: true },
-      tuesday: { open: "08:00", close: "18:00", isOpen: true },
-      wednesday: { open: "08:00", close: "18:00", isOpen: true },
-      thursday: { open: "08:00", close: "18:00", isOpen: true },
-      friday: { open: "08:00", close: "18:00", isOpen: true },
-      saturday: { open: "09:00", close: "15:00", isOpen: true },
-      sunday: { open: "10:00", close: "14:00", isOpen: false },
-    },
-    services: [
-      "General Medicine",
-      "Cardiology",
-      "Dermatology",
-      "Pediatrics",
-      "Emergency Care",
-      "Laboratory Services",
-      "Radiology",
-      "Pharmacy",
-    ],
-    insurance: ["Blue Cross Blue Shield", "Aetna", "Cigna", "UnitedHealth", "Medicare", "Medicaid"],
-  })
-
+  useEffect(()=>{
+      const fetchClinicData = async () => {
+        const response = await fetch("/api/clinic/me")
+        const data = await response.json()
+        console.log(data)
+        const mergedData = {
+          ...ClinicDefaults,
+          name: data.name,
+          phone: data.phone === null || data.phone === ""? ClinicDefaults.phone : data.phone,
+          email: data.email,
+          address: data.location,
+        }
+        setClinicData(mergedData);
+      }
+      fetchClinicData()
+  },[])
   const handleInputChange = (field: string, value: any) => {
     setClinicData({ ...clinicData, [field]: value })
   }
@@ -61,9 +47,37 @@ export default function ClinicProfilePage() {
   const handleSave = async () => {
     setIsSaving(true)
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsSaving(false)
-    setIsEditing(false)
+    try{
+      const response = await fetch("/api/clinic/me",{
+        method:"PUT",
+        headers:{
+          "Content-Type":"application/json",
+        },
+        body : JSON.stringify({
+          name: clinicData.name,
+          phone: clinicData.phone,
+          location: clinicData.address,
+        })
+      })
+      if(!response.ok){
+        throw new Error(`Failed to update clinic data : ${response.statusText}`);
+      }
+      const updatedData = await response.json()
+      setClinicData(prevData => ({
+        ...prevData,
+        name: updatedData.name,
+        phone: updatedData.phone,
+        address: updatedData.location, // Map location back to address
+      }));
+      
+      setIsEditing(false)
+  } catch (error) {
+      console.error("Error updating profile:", error)
+      // You might want to show an error message to the user here
+      alert("Failed to update profile. Please try again.")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const daysOfWeek = [
