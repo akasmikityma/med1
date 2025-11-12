@@ -87,9 +87,9 @@ Cloud-hosted PostgreSQL database for reliability and scalability.
 
 | View | Preview |
 |------|----------|
-| 🔐 Google Login | ![Google Login](Screenshots/PatientLogin.gif) |
-| 🏥 Clinic Creating Visit | ![Clinic VisitCreating](Screenshots/ClinicCreatingVisit.gif) |
-| 👨‍⚕️ Patient Booking | ![Patient Booking](Screenshots/PatientBookingVisit.gif) |
+| 🔐 Google Login | ![Google Login](/Screenshots//PatientLogin.gif) |
+| 🏥 Clinic Creating Visit | ![Clinic VisitCreating](/Screenshots/ClinicCreatingVisit.gif) |
+| 👨‍⚕️ Patient Booking | ![Patient Booking](/Screenshots/PatientBookingVisit.gif) |
 
 ---
 
