@@ -1,64 +1,104 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Calendar, Clock, Plus, Edit, Save, X, User, Trash2 } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-
+import { mockDoctorVisits } from "@/app/clinic/schedules/Constants"
 // Mock doctor visits data - in real app, fetch from your database
-const mockDoctorVisits = [
-  {
-    id: "1",
-    doctorId: "1",
-    doctorName: "Dr. Sarah Johnson",
-    specialty: "Cardiologist",
-    dayOfWeek: 1, // Monday
-    startTime: "09:00",
-    endTime: "17:00",
-    appointmentCount: 12, // How many appointments booked for this visit
-    totalSlots: 16, // Total available slots
-  },
-  {
-    id: "2",
-    doctorId: "1",
-    doctorName: "Dr. Sarah Johnson",
-    specialty: "Cardiologist",
-    dayOfWeek: 3, // Wednesday
-    startTime: "09:00",
-    endTime: "17:00",
-    appointmentCount: 8,
-    totalSlots: 16,
-  },
-  {
-    id: "3",
-    doctorId: "2",
-    doctorName: "Dr. Michael Chen",
-    specialty: "Dermatologist",
-    dayOfWeek: 1, // Monday
-    startTime: "10:00",
-    endTime: "18:00",
-    appointmentCount: 15,
-    totalSlots: 16,
-  },
-  {
-    id: "4",
-    doctorId: "2",
-    doctorName: "Dr. Michael Chen",
-    specialty: "Dermatologist",
-    dayOfWeek: 5, // Friday
-    startTime: "10:00",
-    endTime: "18:00",
-    appointmentCount: 10,
-    totalSlots: 16,
-  },
-]
+// const mockDoctorVisits = [
+//   {
+//     id: "1",
+//     doctorId: "1",
+//     doctorName: "Dr. Sarah Johnson",
+//     specialty: "Cardiologist",
+//     dayOfWeek: 1, // Monday
+//     startTime: "09:00",
+//     endTime: "17:00",
+//     appointmentCount: 12, // How many appointments booked for this visit
+//     totalSlots: 16, // Total available slots
+//   },
+//   {
+//     id: "2",
+//     doctorId: "1",
+//     doctorName: "Dr. Sarah Johnson",
+//     specialty: "Cardiologist",
+//     dayOfWeek: 3, // Wednesday
+//     startTime: "09:00",
+//     endTime: "17:00",
+//     appointmentCount: 8,
+//     totalSlots: 16,
+//   },
+//   {
+//     id: "3",
+//     doctorId: "2",
+//     doctorName: "Dr. Michael Chen",
+//     specialty: "Dermatologist",
+//     dayOfWeek: 1, // Monday
+//     startTime: "10:00",
+//     endTime: "18:00",
+//     appointmentCount: 15,
+//     totalSlots: 16,
+//   },
+//   {
+//     id: "4",
+//     doctorId: "2",
+//     doctorName: "Dr. Michael Chen",
+//     specialty: "Dermatologist",
+//     dayOfWeek: 5, // Friday
+//     startTime: "10:00",
+//     endTime: "18:00",
+//     appointmentCount: 10,
+//     totalSlots: 16,
+//   },
+// ]
 
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 export default function SchedulesPage() {
   const [doctorVisits, setDoctorVisits] = useState(mockDoctorVisits)
   const [editingVisit, setEditingVisit] = useState<string | null>(null)
+
+
+  useEffect(()=>{
+    const fetchDoctorVisits = async()=>{
+      try{  
+        const response = await fetch("/api/clinic/doctorvisits",{
+          method:"GET",
+          headers:{
+            "Content-Type" : 'Application/json'
+          }
+        })
+
+        if(!response.ok){
+          throw new Error(`http error occured status : response.status ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("fetched data ",data);
+
+        const mappedData = data.map((visit:any)=>({
+          ...visit,
+          totalSlots:20,
+          id: visit.id,
+          doctorId: visit.doctorId,
+          doctorName: visit.doctor.name,
+          specialty: visit.doctor.specialization,
+          dayOfWeek: visit.dayOfWeek, // Monday
+          startTime: visit.startTime,
+          endTime: visit.endTime,
+          appointmentCount: visit._count.appointments,
+        }))
+
+        setDoctorVisits(mappedData);
+      }catch(err){
+        console.log(err);
+      }
+    }
+
+    fetchDoctorVisits();
+  },[]);
 
   const handleDeleteVisit = (visitId: string) => {
     if (confirm("Are you sure you want to delete this doctor visit? This will cancel all associated appointments.")) {

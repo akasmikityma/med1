@@ -2,11 +2,12 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ArrowLeft, Calendar, User, CheckCircle } from "lucide-react"
-
+import { doctorsForPatient } from "@/store/doctors"
+import { useRecoilState } from "recoil"
 export default function BookAppointmentPage() {
   const searchParams = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -24,32 +25,61 @@ export default function BookAppointmentPage() {
   const doctorId = searchParams.get("doctor")
   const selectedDate = searchParams.get("date")
   const selectedTime = searchParams.get("time")
-
-  // Mock doctor data - in real app, fetch based on doctorId
-  const doctor = {
-    name: "Dr. Sarah Johnson",
-    specialty: "Cardiologist",
-    clinic: "Heart Care Center",
-    fee: 150,
-  }
-
+  const visitId = searchParams.get("visitId")
+  const [doctors,setDoctors] = useRecoilState<any[]>(doctorsForPatient);
+  
+  useEffect(() => {
+  if (doctors.length === 0) {
+      // Fetch and set doctors if not already loaded
+      const stored = localStorage.getItem("doctorsForPatient");
+      if(stored){
+        setDoctors(JSON.parse(stored));
+      }else{
+        fetch("/api/patient/doctors")
+        .then(res => res.json())
+        .then(data => setDoctors(data.items));
+      }
+    }
+  }, [doctors, setDoctors]);
+  const doctor = doctors.find((d)=>d.id === doctorId);
+  // useEffect(()=>{
+  //   console.log("doctors",doctors);
+  //   console.log("doctorId",doctorId,"doctor",doctor);
+  // },[]);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     })
   }
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+  e.preventDefault();
+  setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+  const response = await fetch("/api/patient/appointments", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      visitId,
+      date: selectedDate,
+      time: selectedTime,
+      // You can add more fields if needed
+    }),
+  });
 
-    setIsSubmitting(false)
-    setIsBooked(true)
+  if (response.ok) {
+    setIsBooked(true);
+  } else {
+    // Handle error (e.g., show a message)
+    const errorMsg = await response.text();
+    alert(errorMsg);
   }
+
+  setIsSubmitting(false);
+};
 
   if (isBooked) {
     return (
@@ -60,7 +90,7 @@ export default function BookAppointmentPage() {
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Appointment Booked!</h2>
           <p className="text-gray-600 mb-6">
-            Your appointment with {doctor.name} has been confirmed for {selectedDate} at {selectedTime}.
+            Your appointment with {doctor?.name} has been confirmed for {selectedDate} at {selectedTime}.
           </p>
           <div className="space-y-3">
             <Link
@@ -113,8 +143,8 @@ export default function BookAppointmentPage() {
                 <User className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-600">Doctor</p>
-                  <p className="font-medium text-gray-800">{doctor.name}</p>
-                  <p className="text-sm text-blue-600">{doctor.specialty}</p>
+                  <p className="font-medium text-gray-800">{doctor?.name}</p>
+                  <p className="text-sm text-blue-600">{doctor?.specialization}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
@@ -129,7 +159,7 @@ export default function BookAppointmentPage() {
             <div className="mt-4 pt-4 border-t">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Consultation Fee</span>
-                <span className="text-xl font-bold text-gray-800">${doctor.fee}</span>
+                <span className="text-xl font-bold text-gray-800">${100}</span>
               </div>
             </div>
           </div>

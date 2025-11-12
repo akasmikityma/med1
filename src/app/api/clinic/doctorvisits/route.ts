@@ -1,37 +1,91 @@
+// import { getServerSession } from "next-auth";
+// import { NextResponse } from 'next/server';
+// import { authOptions } from "@/lib/Auth";
+// import DBClient from "@/lib/prisma";
+// import { setServers } from "dns";
+// const prisma  = DBClient.getInstance().prisma;
+
+// export async function GET(req: Request){
+//     const session = await getServerSession(authOptions);
+//     console.log(session?.user.email ,session?.user.name)
+//     if(!session || session.user?.role != 'CLINIC'){
+//         return new NextResponse('Unauthorized',{status: 401});
+//     }
+
+//     const clinic = await prisma.clinic.findUnique({
+//         where: {
+//             userId: session.user.id,
+//         },
+//     })
+//     if(!clinic){
+//         return new NextResponse('Clinic not found',{status: 404});
+//     }
+
+//     const visits = await prisma.doctorVisit.findMany({
+//         where:{
+//             clinicId : clinic.id
+//         },
+//         include:{
+//             doctor:true,
+//             _count:{
+//               select:{appointments:true}
+//             }
+//         }
+//     })
+//     console.log("visits",visits);
+//     return NextResponse.json(visits);
+// }
 import { getServerSession } from "next-auth";
 import { NextResponse } from 'next/server';
 import { authOptions } from "@/lib/Auth";
 import DBClient from "@/lib/prisma";
-import { setServers } from "dns";
+
 const prisma  = DBClient.getInstance().prisma;
 
-export async function GET(req: Request){
-    const session = await getServerSession(authOptions);
-    console.log(session?.user.email ,session?.user.name)
-    if(!session || session.user?.role != 'CLINIC'){
-        return new NextResponse('Unauthorized',{status: 401});
-    }
+export async function GET(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user?.role !== 'CLINIC') {
+    return new NextResponse('Unauthorized', { status: 401 });
+  }
 
-    const clinic = await prisma.clinic.findUnique({
-        where: {
-            userId: session.user.id,
-        },
-    })
-    if(!clinic){
-        return new NextResponse('Clinic not found',{status: 404});
-    }
+  const clinic = await prisma.clinic.findUnique({
+    where: { userId: session.user.id },
+  });
 
-    const visits = await prisma.doctorVisit.findMany({
-        where:{
-            clinicId : clinic.id
+  if (!clinic) {
+    return new NextResponse('Clinic not found', { status: 404 });
+  }
+
+  // Current date/time in your server’s timezone
+  const now = new Date();
+
+  // Only fetch visits that are upcoming or ongoing
+  const visits = await prisma.doctorVisit.findMany({
+    where: {
+      clinicId: clinic.id,
+      OR: [
+        {
+          // visits that start in the future
+          startTime: { gt: now.toTimeString().slice(0, 5) },
         },
-        include:{
-            doctor:true
-        }
-    })
-    console.log(visits);
-    return NextResponse.json(visits);
+        {
+          // ongoing visits: started already, but not ended yet
+          AND: [
+            { startTime: { lte: now.toTimeString().slice(0, 5) } },
+            { endTime: { gte: now.toTimeString().slice(0, 5) } },
+          ],
+        },
+      ],
+    },
+    include: {
+      doctor: true,
+      _count: { select: { appointments: true } },
+    },
+  });
+
+  return NextResponse.json(visits);
 }
+
 export async function POST(req:Request){
      const session = await getServerSession(authOptions);
   

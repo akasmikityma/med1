@@ -61,13 +61,17 @@ model DoctorVisit {
   id         String   @id @default(cuid())
   doctorId   String
   clinicId   String
-  dayOfWeek  Int      // 0 (Sunday) to 6 (Saturday)
-  startTime  String   // "09:00", stored as text
-  endTime    String   // "12:00"
+  dayOfWeek  Int
+  startTime  String
+  endTime    String
 
   doctor     Doctor   @relation(fields: [doctorId], references: [id])
   clinic     Clinic   @relation(fields: [clinicId], references: [id])
   appointments Appointment[]
+
+  @@index([clinicId])
+  @@index([startTime])
+  @@index([endTime])
 }
 
 model Appointment {

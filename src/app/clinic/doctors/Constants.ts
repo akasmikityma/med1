@@ -1,7 +1,7 @@
 import { Contact } from "lucide-react"
 
 export const DoctorDefaults = {
-    id: 0,
+    id: "1",
     name: "Dr. [Name]",
     email: "doctor@clinic.com",
     phone: "+1 (555) 000-0000",
@@ -19,7 +19,7 @@ export const DoctorDefaults = {
     specialization: ""
   }
   export const DoctorProfileDefaults = {
-    id: 0,
+    id: "1",
     name: "Dr. [Name]",
     email: "doctor@clinic.com",
     phone: "+1 (555) 000-0000",

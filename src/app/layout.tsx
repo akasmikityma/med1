@@ -1,17 +1,12 @@
-
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
-import { SessionProvider } from "next-auth/react";
-import SessionWrapper from "./comps/SessionWrapper";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import { Providers } from "@/app/comps/Providers";
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -21,17 +16,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <SessionWrapper>
-          {children}
-        </SessionWrapper>
+      <body className={inter.variable}>
+        <Providers>
+          <Suspense fallback={<div>Loading...</div>}>
+            {children}
+          </Suspense>
+        </Providers>
       </body>
     </html>
   );

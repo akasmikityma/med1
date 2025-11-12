@@ -6,9 +6,12 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { DoctorDefaults,DoctorsListDefaults } from "./Constants"
 import Link from "next/link"
+import { doctorsState } from "@/store/doctors" 
+import { useRecoilState } from "recoil"
 
 export default function DoctorsPage() {
-  const [doctors, setDoctors] = useState(DoctorsListDefaults);
+  // const [doctors, setDoctors] = useState(DoctorsListDefaults);
+  const [doctors,setDoctors]  = useRecoilState(doctorsState);
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading]  = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -24,7 +27,7 @@ export default function DoctorsPage() {
         console.log("fetched doctors",data);
 
         const mappedDoctors = data.map((doctor: any) => ({
-          ...DoctorDefaults,
+          ...doctors,
           id: doctor.id,
           name: doctor.name || DoctorDefaults.name,
           specialty: doctor.specialization || DoctorDefaults.specialty,
@@ -58,13 +61,13 @@ export default function DoctorsPage() {
       doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleDeleteDoctor = (id: number) => {
+  const handleDeleteDoctor = (id: string) => {
     if (confirm("Are you sure you want to remove this doctor?")) {
       setDoctors(doctors.filter((doctor) => doctor.id !== id))
     }
   }
 
-  const toggleDoctorStatus = (id: number) => {
+  const toggleDoctorStatus = (id: string) => {
     setDoctors(
       doctors.map((doctor) =>
         doctor.id === id ? { ...doctor, status: doctor.status === "active" ? "inactive" : "active" } : doctor,

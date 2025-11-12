@@ -53,11 +53,11 @@ const navigationItems = [
     url: "/clinic/patients",
     icon: UserPlus,
   },
-  {
-    title: "Reports",
-    url: "/clinic/reports",
-    icon: BarChart3,
-  },
+  // {
+  //   title: "Reports",
+  //   url: "/clinic/reports",
+  //   icon: BarChart3,
+  // },
 ]
 
 const accountItems = [

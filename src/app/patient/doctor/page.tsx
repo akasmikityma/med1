@@ -1,67 +1,44 @@
+
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
+import { useRecoilState, useRecoilValue } from "recoil"
 import { Search, Filter, MapPin, Star, Clock, Calendar } from "lucide-react"
 import { PatientHeader } from "../PatientComps/patientHeader"
-
-// Mock data - replace with real API calls
-const mockDoctors = [
-  {
-    id: 1,
-    name: "Dr. Sarah Johnson",
-    specialty: "Cardiologist",
-    clinic: "Heart Care Center",
-    location: "Downtown Medical Plaza",
-    rating: 4.8,
-    reviews: 124,
-    experience: "15 years",
-    nextAvailable: "Today 2:00 PM",
-    image: "/placeholder.svg?height=100&width=100",
-    consultationFee: 150,
-  },
-  {
-    id: 2,
-    name: "Dr. Michael Chen",
-    specialty: "Dermatologist",
-    clinic: "Skin Health Clinic",
-    location: "Medical Center West",
-    rating: 4.9,
-    reviews: 89,
-    experience: "12 years",
-    nextAvailable: "Tomorrow 10:30 AM",
-    image: "/placeholder.svg?height=100&width=100",
-    consultationFee: 120,
-  },
-  {
-    id: 3,
-    name: "Dr. Emily Rodriguez",
-    specialty: "Pediatrician",
-    clinic: "Children's Health Center",
-    location: "Family Medical Building",
-    rating: 4.7,
-    reviews: 156,
-    experience: "10 years",
-    nextAvailable: "Today 4:15 PM",
-    image: "/placeholder.svg?height=100&width=100",
-    consultationFee: 100,
-  },
-]
-
+import { doctorsForPatient } from "@/store/doctors"
 const specialties = ["All", "Cardiologist", "Dermatologist", "Pediatrician", "Neurologist", "Orthopedic"]
 
 export default function DoctorsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSpecialty, setSelectedSpecialty] = useState("All")
   const [showFilters, setShowFilters] = useState(false)
+  const [doctors, setDoctors] = useRecoilState<any[]>(doctorsForPatient)
+  const [loading, setLoading] = useState(true)
 
-  const filteredDoctors = mockDoctors.filter((doctor) => {
-    const matchesSearch =
-      doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesSpecialty = selectedSpecialty === "All" || doctor.specialty === selectedSpecialty
-    return matchesSearch && matchesSpecialty
-  })
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      setLoading(true)
+      const res = await fetch("/api/patient/doctors")
+      const data = await res.json()
+      setDoctors(data.items);
+      localStorage.setItem("doctorsForPatient",JSON.stringify(data.items));
+      setLoading(false)
+    }
+    fetchDoctors()
+  }, [])
+
+  // Filtering logic
+  const filteredDoctors = useMemo(() => {
+    console.log("doctors at doctors page ",doctors);
+    return doctors.filter((doctor) => {
+      const matchesSearch =
+        doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesSpecialty = selectedSpecialty === "All" || doctor.specialization === selectedSpecialty
+      return matchesSearch && matchesSpecialty
+    })
+  }, [doctors, searchTerm, selectedSpecialty])
 
   return (
     <div className="flex flex-1 flex-col">
@@ -119,8 +96,11 @@ export default function DoctorsPage() {
         {/* Results */}
         <div className="mb-4">
           <p className="text-gray-600">
-            Showing {filteredDoctors.length} doctor{filteredDoctors.length !== 1 ? "s" : ""}
-            {selectedSpecialty !== "All" && ` in ${selectedSpecialty}`}
+            {loading
+              ? "Loading doctors..."
+              : `Showing ${filteredDoctors.length} doctor${filteredDoctors.length !== 1 ? "s" : ""}${
+                  selectedSpecialty !== "All" ? ` in ${selectedSpecialty}` : ""
+                }`}
           </p>
         </div>
 
@@ -133,7 +113,7 @@ export default function DoctorsPage() {
                   {/* Doctor Image */}
                   <div className="flex-shrink-0">
                     <img
-                      src={doctor.image || "/placeholder.svg"}
+                      src={"/placeholder.svg"}
                       alt={doctor.name}
                       className="w-24 h-24 rounded-full object-cover"
                     />
@@ -144,30 +124,38 @@ export default function DoctorsPage() {
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                       <div className="mb-4 md:mb-0">
                         <h3 className="text-xl font-semibold text-gray-800 mb-1">{doctor.name}</h3>
-                        <p className="text-blue-600 font-medium mb-2">{doctor.specialty}</p>
+                        <p className="text-blue-600 font-medium mb-2">{doctor.specialization}</p>
 
                         <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                          {/* You can add rating/reviews if available */}
                           <div className="flex items-center space-x-1">
                             <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                            <span>{doctor.rating}</span>
-                            <span>({doctor.reviews} reviews)</span>
+                            <span>4.8</span>
+                            <span>(124 reviews)</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Clock className="w-4 h-4" />
-                            <span>{doctor.experience} experience</span>
+                            <span>{doctor.experience} years experience</span>
                           </div>
                         </div>
 
                         <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
                           <MapPin className="w-4 h-4" />
                           <span>
-                            {doctor.clinic}, {doctor.location}
+                            {doctor.nextAvailable.clinic
+                              ? `${doctor.nextAvailable.clinic}, ${doctor.nextAvailable.clinicAddress}`
+                              : "No clinic info"}
                           </span>
                         </div>
 
                         <div className="flex items-center space-x-1 text-sm text-green-600">
                           <Calendar className="w-4 h-4" />
-                          <span>Next available: {doctor.nextAvailable}</span>
+                          <span>
+                            Next available:{" "}
+                            {doctor.nextAvailable
+                              ? `${new Date(doctor.nextAvailable.date).toLocaleDateString()} ${doctor.nextAvailable.time}`
+                              : "No slots"}
+                          </span>
                         </div>
                       </div>
 
@@ -175,7 +163,10 @@ export default function DoctorsPage() {
                       <div className="text-right">
                         <div className="mb-3">
                           <p className="text-sm text-gray-600">Consultation Fee</p>
-                          <p className="text-2xl font-bold text-gray-800">${doctor.consultationFee}</p>
+                          <p className="text-2xl font-bold text-gray-800">
+                            {/* If you have fee info, use it; else show placeholder */}
+                            $120
+                          </p>
                         </div>
                         <Link
                           href={`/patient/doctor/${doctor.id}`}
@@ -192,7 +183,7 @@ export default function DoctorsPage() {
           ))}
         </div>
 
-        {filteredDoctors.length === 0 && (
+        {!loading && filteredDoctors.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No doctors found</h3>

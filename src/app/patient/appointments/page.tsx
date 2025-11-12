@@ -1,49 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+// import { useRecoilState } from "recoil"
 import { Calendar, Clock, MapPin, Video, MoreVertical, Filter } from "lucide-react"
 import { PatientHeader } from "../PatientComps/patientHeader"
-
+import { AppointMents } from "./Constants"
+import { allAppointmetns } from "@/store/Patient/Appointments"
+import { useRecoilValue } from "recoil"
 // Mock appointments data
-const mockAppointments = [
-  {
-    id: 1,
-    doctor: "Dr. Sarah Johnson",
-    specialty: "Cardiologist",
-    clinic: "Heart Care Center",
-    date: "2024-01-20",
-    time: "2:00 PM",
-    status: "confirmed",
-    type: "in-person",
-    reason: "Regular checkup",
-    image: "/placeholder.svg?height=60&width=60",
-  },
-  {
-    id: 2,
-    doctor: "Dr. Michael Chen",
-    specialty: "Dermatologist",
-    clinic: "Skin Health Clinic",
-    date: "2024-01-25",
-    time: "10:30 AM",
-    status: "pending",
-    type: "video",
-    reason: "Skin consultation",
-    image: "/placeholder.svg?height=60&width=60",
-  },
-  {
-    id: 3,
-    doctor: "Dr. Emily Rodriguez",
-    specialty: "Pediatrician",
-    clinic: "Children's Health Center",
-    date: "2024-01-15",
-    time: "4:15 PM",
-    status: "completed",
-    type: "in-person",
-    reason: "Follow-up visit",
-    image: "/placeholder.svg?height=60&width=60",
-  },
-]
 
 const statusColors = {
   confirmed: "bg-green-100 text-green-800",
@@ -54,11 +19,56 @@ const statusColors = {
 
 export default function AppointmentsPage() {
   const [filter, setFilter] = useState("all")
+  // const [allappoints,setAllAppoints] = useRecoilState(allAppointmetns);
+  const allappointsRaw = useRecoilValue(allAppointmetns);
+  const allappoints: AppointMents[] = allappointsRaw.map((appointment: any) => ({
+  id: appointment.id,
+  doctor: appointment.doctorVisit?.doctor?.name || "Unknown Doctor",
+  specialty: appointment.doctorVisit?.doctor?.specialization || "Unknown Specialty",
+  clinic: appointment.doctorVisit?.clinic?.name || "Unknown Clinic",
+  date: new Date(appointment.date).toLocaleDateString(),
+  time: appointment.time,
+  status: appointment.status?.toLowerCase() || "pending",
+  type: "in-person", // or use appointment.type if you have it
+  reason: appointment.reason || "Regular checkup",
+  image: "/placeholder.svg"
+}));
+ 
+  // const filteredAppointments = mockAppointments.filter((appointment) => {
+  //   if (filter === "all") return true
+  //   return appointment.status === filter
+  // })
+  // useEffect(()=>{
+  //   const getAppointmentsData = async()=>{
+  //     try{
+  //       const response = await fetch('/api/patient/appointments');
+  //       const data = await response.json();
 
-  const filteredAppointments = mockAppointments.filter((appointment) => {
-    if (filter === "all") return true
-    return appointment.status === filter
-  })
+  //       console.log("appointments",JSON.stringify(data));
+  //       const filteredAppoints:AppointMents[] = data.map((appointment:any)=>({
+  //         id:appointment.id,
+  //         doctor: appointment.doctorVisit.doctor.name,
+  //         specialty: appointment.doctorVisit.doctor.specialization,
+  //         clinic: appointment.doctorVisit.clinic.name,
+  //         date: new Date(appointment.date).toLocaleDateString(),
+  //         time: appointment.time,
+  //         status: appointment.status.toLowerCase(),
+  //         type: "in-person", // or determine based on your business logic
+  //         reason: "Regular checkup", // Add this field in your backend or set default
+  //         image: "/placeholder.svg" 
+  //       }))
+  //       setAllAppoints(filteredAppoints);
+  //     }catch(err){
+  //       console.log(err);
+  //     }
+  //   }
+
+  //   getAppointmentsData();
+  // },[]);
+
+  useEffect(()=>{
+  console.log(allappointsRaw);
+ },[])
 
   const getStatusText = (status: string) => {
     return status.charAt(0).toUpperCase() + status.slice(1)
@@ -101,7 +111,7 @@ export default function AppointmentsPage() {
 
         {/* Rest of the appointments content remains the same */}
         <div className="space-y-4">
-          {filteredAppointments.map((appointment) => (
+          {allappoints.map((appointment) => (
             <div
               key={appointment.id}
               className="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow"
@@ -171,7 +181,7 @@ export default function AppointmentsPage() {
           ))}
         </div>
 
-        {filteredAppointments.length === 0 && (
+        {allappoints.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📅</div>
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No appointments found</h3>

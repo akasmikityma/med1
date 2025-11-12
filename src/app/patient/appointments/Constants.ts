@@ -1,0 +1,52 @@
+
+export type AppointMents={
+    id: number,
+    doctor: string,
+    specialty: string,
+    clinic: string,
+    date: string,
+    time: string,
+    status: string,
+    type: string,
+    reason: string,
+    image: string,
+}
+
+const mockAppointments = [
+  {
+    id: 1,
+    doctor: "Dr. Sarah Johnson",
+    specialty: "Cardiologist",
+    clinic: "Heart Care Center",
+    date: "2024-01-20",
+    time: "2:00 PM",
+    status: "confirmed",
+    type: "in-person",
+    reason: "Regular checkup",
+    image: "/placeholder.svg?height=60&width=60",
+  },
+  {
+    id: 2,
+    doctor: "Dr. Michael Chen",
+    specialty: "Dermatologist",
+    clinic: "Skin Health Clinic",
+    date: "2024-01-25",
+    time: "10:30 AM",
+    status: "pending",
+    type: "video",
+    reason: "Skin consultation",
+    image: "/placeholder.svg?height=60&width=60",
+  },
+  {
+    id: 3,
+    doctor: "Dr. Emily Rodriguez",
+    specialty: "Pediatrician",
+    clinic: "Children's Health Center",
+    date: "2024-01-15",
+    time: "4:15 PM",
+    status: "completed",
+    type: "in-person",
+    reason: "Follow-up visit",
+    image: "/placeholder.svg?height=60&width=60",
+  },
+]

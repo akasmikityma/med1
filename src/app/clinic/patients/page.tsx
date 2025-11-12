@@ -1,73 +1,167 @@
 "use client"
 
-import { useState } from "react"
+import { useState,useEffect } from "react"
 import { Search, User, Phone, Calendar, Eye, Filter } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-
+import { mockPatients,Patient } from "@/app/api/clinic/patients/Constants"
+import { emptyPatient } from "@/app/api/clinic/patients/Constants"
 // Mock patients data
-const mockPatients = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john.smith@email.com",
-    phone: "+1 (555) 123-4567",
-    dateOfBirth: "1985-03-15",
-    gender: "Male",
-    bloodType: "O+",
-    lastVisit: "2024-01-15",
-    totalVisits: 12,
-    status: "active",
-    emergencyContact: "+1 (555) 987-6543",
-    address: "123 Main St, City, State 12345",
-    allergies: "Penicillin",
-    conditions: ["Hypertension", "Diabetes Type 2"],
-  },
-  {
-    id: 2,
-    name: "Emily Davis",
-    email: "emily.davis@email.com",
-    phone: "+1 (555) 234-5678",
-    dateOfBirth: "1990-07-22",
-    gender: "Female",
-    bloodType: "A+",
-    lastVisit: "2024-01-18",
-    totalVisits: 8,
-    status: "active",
-    emergencyContact: "+1 (555) 876-5432",
-    address: "456 Oak Ave, City, State 12345",
-    allergies: "None",
-    conditions: ["Asthma"],
-  },
-  {
-    id: 3,
-    name: "Robert Wilson",
-    email: "robert.wilson@email.com",
-    phone: "+1 (555) 345-6789",
-    dateOfBirth: "2018-12-10",
-    gender: "Male",
-    bloodType: "B+",
-    lastVisit: "2024-01-10",
-    totalVisits: 15,
-    status: "active",
-    emergencyContact: "+1 (555) 765-4321",
-    address: "789 Pine St, City, State 12345",
-    allergies: "Nuts",
-    conditions: [],
-  },
-]
 
+function useDebounce<T>(value: T, delay = 400) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
 export default function PatientsPage() {
-  const [patients, setPatients] = useState(mockPatients)
+  const [patientsData, setPatientsData] = useState<{ items: any[]; total: number }>({ items: [], total: 0 });
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(20);
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedPatient, setSelectedPatient] = useState<any>(null)
+  const [selectedPatient, setSelectedPatient] = useState<Patient|null>(null)
+  const debouncedSearch = useDebounce(searchTerm, 450);
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<any[] | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
-  const filteredPatients = patients.filter(
-    (patient) =>
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.phone.includes(searchTerm),
-  )
+  const [patients , setPatients] = useState(mockPatients);
+   useEffect(() => {
+    async function fetchPatients() {
+      setLoading(true);
+      try {
+        const q = new URLSearchParams({
+          page: String(page),
+          pageSize: String(pageSize),
+          search: debouncedSearch,
+        });
+        const res = await fetch(`/api/clinic/patients?${q.toString()}`);
+        const json = await res.json();
+        console.log(" patitents json data ",JSON.stringify(json))
+        setPatientsData({ items: json.items || [], total: json.total || 0 });
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPatients();
+  }, [page, pageSize, debouncedSearch]);
+
+  // TO GET THE MODAL DATA FOR SPECIFIC PATIENT >> 
+//   useEffect(() => {
+//   if (!selectedPatient) {
+//     setHistory(null);
+//     return;
+//   }
+
+//   let cancelled = false;
+
+//   (async () => {
+//     setHistoryLoading(true);
+//     try {
+//       const q = new URLSearchParams({ page: "1", pageSize: "10" });
+//       const res = await fetch(`/api/clinic/patients/${selectedPatient.id}/history?${q}`);
+//       const data = await res.json();
+
+//       // appointments for history
+//       if (!cancelled) {
+//         setHistory(data.appointments || []);
+//       }
+
+//       // extend patient details with generic defaults
+//       if (!cancelled) {
+//         const enrichedPatient: Patient = {
+//           ...data, // 👈 fresh patient data from API/db
+//           phone: data.phone ?? "+1 (000) 000-0000",
+//           dateOfBirth: data.dateOfBirth ?? "1990-01-01",
+//           gender: data.gender ?? "Unknown",
+//           bloodType: data.bloodType ?? "N/A",
+//           lastVisit: data.appointments?.[0]?.date ?? null,
+//           totalVisits: data.appointments?.length ?? 0,
+//           status: data.status ?? "active",
+//           emergencyContact: data.emergencyContact ?? "Not Provided",
+//           address: data.address ?? "Not Provided",
+//           allergies: data.allergies ?? "None",
+//           conditions: data.conditions ?? [],
+//         };
+
+//         setSelectedPatient(enrichedPatient);
+//     }
+//     } catch (e) {
+//       console.error(e);
+//     } finally {
+//       if (!cancelled) {
+//         setHistoryLoading(false);
+//       }
+//     }
+//   })();
+
+//   return () => {
+//     cancelled = true;
+//   };
+// }, [selectedPatient?.id]); // only re-run when patient changes
+
+useEffect(() => {
+  if (!selectedPatient?.id) {  // Add explicit id check
+    setHistory(null);
+    return;
+  }
+
+  let cancelled = false;
+
+  (async () => {
+    setHistoryLoading(true);
+    try {
+      const q = new URLSearchParams({ page: "1", pageSize: "10" });
+      const res = await fetch(`/api/clinic/patients/${selectedPatient.id}/history?${q}`);
+      const data = await res.json();
+
+      if (!cancelled) {
+        setHistory(data.appointments || []);
+        
+        // Only update patient if we have new data
+        if (data && Object.keys(data).length > 0) {
+          const enrichedPatient: Patient = {
+            ...selectedPatient, // Keep existing patient data as base
+            ...data, // Merge new data
+            phone: data.phone ?? selectedPatient.phone ?? "+1 (000) 000-0000",
+            dateOfBirth: data.dateOfBirth ?? selectedPatient.dateOfBirth ?? "1990-01-01",
+            gender: data.gender ?? selectedPatient.gender ?? "Unknown",
+            bloodType: data.bloodType ?? selectedPatient.bloodType ?? "N/A",
+            lastVisit: data.appointments?.[0]?.date ?? selectedPatient.lastVisit ?? null,
+            totalVisits: data.appointments?.length ?? selectedPatient.totalVisits ?? 0,
+            status: data.status ?? selectedPatient.status ?? "active",
+            emergencyContact: data.emergencyContact ?? selectedPatient.emergencyContact ?? "Not Provided",
+            address: data.address ?? selectedPatient.address ?? "Not Provided",
+            allergies: data.allergies ?? selectedPatient.allergies ?? "None",
+            conditions: data.conditions ?? selectedPatient.conditions ?? [],
+          };
+          setSelectedPatient(enrichedPatient);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      if (!cancelled) {
+        setHistoryLoading(false);
+      }
+    }
+  })();
+
+  return () => {
+    cancelled = true;
+  };
+}, [selectedPatient?.id]); 
+
+  // const filteredPatients = patients.filter(
+  //   (patient) =>
+  //     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     patient.phone.includes(searchTerm),
+  // )
 
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date()
@@ -97,7 +191,7 @@ export default function PatientsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Patients</p>
-                <p className="text-2xl font-bold text-blue-600">{patients.length}</p>
+                <p className="text-2xl font-bold text-blue-600">{patientsData.total}</p>
               </div>
               <User className="w-8 h-8 text-blue-600" />
             </div>
@@ -107,7 +201,7 @@ export default function PatientsPage() {
               <div>
                 <p className="text-sm text-gray-600">Active Patients</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {patients.filter((p) => p.status === "active").length}
+                  {patientsData.total}
                 </p>
               </div>
               <User className="w-8 h-8 text-green-600" />
@@ -118,7 +212,8 @@ export default function PatientsPage() {
               <div>
                 <p className="text-sm text-gray-600">Avg Visits</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {Math.round(patients.reduce((acc, p) => acc + p.totalVisits, 0) / patients.length)}
+                  {/* {Math.round(patients.reduce((acc, p) => acc + p.totalVisits, 0) / patients.length)} */}
+                  {12}
                 </p>
               </div>
               <Calendar className="w-8 h-8 text-purple-600" />
@@ -136,22 +231,15 @@ export default function PatientsPage() {
         </div>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-xl border p-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search patients by name, email, or phone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
+         <div className="mb-4">
+          <div className="relative max-w-lg">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              placeholder="Search patients..."
+              className="pl-10 pr-4 py-2 border rounded"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+            />
           </div>
         </div>
 
@@ -165,41 +253,41 @@ export default function PatientsPage() {
                   <th className="text-left p-4 font-medium text-gray-800">Contact</th>
                   <th className="text-left p-4 font-medium text-gray-800">Age/Gender</th>
                   <th className="text-left p-4 font-medium text-gray-800">Last Visit</th>
-                  <th className="text-left p-4 font-medium text-gray-800">Total Visits</th>
-                  <th className="text-left p-4 font-medium text-gray-800">Status</th>
+                  <th className="text-left p-4 font-medium text-gray-800">Total Appointments</th>
+                  {/* <th className="text-left p-4 font-medium text-gray-800">Status</th> */}
                   <th className="text-left p-4 font-medium text-gray-800">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filteredPatients.map((patient) => (
-                  <tr key={patient.id} className="hover:bg-gray-50">
+                {patientsData.items.map((row) => (
+                  <tr key={row.patient.id} className="hover:bg-gray-50">
                     <td className="p-4">
                       <div>
-                        <h3 className="font-medium text-gray-800">{patient.name}</h3>
-                        <p className="text-sm text-gray-600">{patient.email}</p>
+                        <h3 className="font-medium text-gray-800">{row.patient.name}</h3>
+                        <p className="text-sm text-gray-600">{row.patient.email}</p>
                       </div>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center space-x-1 text-sm text-gray-600">
                         <Phone className="w-4 h-4" />
-                        <span>{patient.phone}</span>
+                        <span>{9123456789}</span>
                       </div>
                     </td>
                     <td className="p-4">
                       <div className="text-sm">
-                        <p className="text-gray-800">{calculateAge(patient.dateOfBirth)} years</p>
-                        <p className="text-gray-600">{patient.gender}</p>
+                        <p className="text-gray-800">{calculateAge("1985-03-15")} years</p>
+                        <p className="text-gray-600">{"Male"}</p>
                       </div>
                     </td>
                     <td className="p-4">
                       <div className="text-sm">
-                        <p className="text-gray-800">{patient.lastVisit}</p>
+                        <p className="text-gray-800">{new Date(row.lastVisit).toLocaleDateString()}</p>
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className="text-sm font-medium text-gray-800">{patient.totalVisits}</span>
+                      <span className="text-sm font-medium text-gray-800">{row.totalAppointments}</span>
                     </td>
-                    <td className="p-4">
+                    {/* <td className="p-4">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           patient.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
@@ -207,9 +295,26 @@ export default function PatientsPage() {
                       >
                         {patient.status}
                       </span>
-                    </td>
+                    </td> */}
                     <td className="p-4">
-                      <Button onClick={() => setSelectedPatient(patient)} variant="outline" size="sm">
+                      <Button 
+                        onClick={() => setSelectedPatient({
+                          ...row.patient,
+                          conditions: row.patient.conditions || [], // Always provide an array
+                          dateOfBirth: row.patient.dateOfBirth || "1990-01-01",
+                          gender: row.patient.gender || "Unknown",
+                          bloodType: row.patient.bloodType || "N/A",
+                          lastVisit: row.lastVisit || "No visits",
+                          totalVisits: row.totalAppointments || 0,
+                          phone: row.patient.phone || "Not provided",
+                          emergencyContact: row.patient.emergencyContact || "Not provided",
+                          address: row.patient.address || "Not provided",
+                          allergies: row.patient.allergies || "None",
+                          status: row.patient.status || "active",
+                        })} 
+                        variant="outline" 
+                        size="sm"
+                      >
                         <Eye className="w-4 h-4 mr-2" />
                         View
                       </Button>
@@ -221,7 +326,7 @@ export default function PatientsPage() {
           </div>
         </div>
 
-        {filteredPatients.length === 0 && (
+        {patientsData.total === 0 && (
           <div className="text-center py-12">
             <User className="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No patients found</h3>
@@ -233,7 +338,7 @@ export default function PatientsPage() {
       </main>
 
       {/* Patient Details Modal */}
-      {selectedPatient && (
+      {selectedPatient&& selectedPatient.id && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b">
@@ -256,7 +361,7 @@ export default function PatientsPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                    <p className="text-gray-800">{calculateAge(selectedPatient.dateOfBirth)} years</p>
+                    <p className="text-gray-800">{calculateAge(selectedPatient.dateOfBirth||"")} years</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
@@ -303,7 +408,7 @@ export default function PatientsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Medical Conditions</label>
                     <div className="flex flex-wrap gap-2">
-                      {selectedPatient.conditions.length > 0 ? (
+                      {selectedPatient && Array.isArray(selectedPatient.conditions) && selectedPatient.conditions.length > 0 ? (
                         selectedPatient.conditions.map((condition: string, index: number) => (
                           <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                             {condition}

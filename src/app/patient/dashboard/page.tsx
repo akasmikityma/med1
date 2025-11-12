@@ -1,11 +1,33 @@
 "use client"
-
+import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Calendar, Clock, User, Bell } from "lucide-react"
-
+import TinyAppointmentCard from "@/app/comps/TinyAppointmentCard"
+import { useRecoilState } from "recoil"
+import { allAppointmetns, Appointment } from "@/store/Patient/Appointments"
+import { time } from "console"
+import Link from "next/link"
 export default function PatientDashboard() {
-  const { data: session } = useSession()
-
+  const { data: session } = useSession();
+  const [MyAppointments,setMyAppointments] = useRecoilState(allAppointmetns);
+  const [contentThere,setContentThere] = useState(true);
+  // useEffect(()=>{
+  //   setContentThere(true)
+  // })
+  useEffect(()=>{
+      const getAppointmentsData = async()=>{
+        try{
+          const response = await fetch('/api/patient/appointments');
+          const data = await response.json();
+  
+          console.log("appointments",JSON.stringify(data));
+          setMyAppointments(data);
+        }catch(err){
+          console.log(err);
+        }
+      }
+      getAppointmentsData();
+    },[]);
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -36,32 +58,37 @@ export default function PatientDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Calendar className="w-6 h-6 text-blue-600" />
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <Link href="/patient/doctor">
+              <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <Calendar className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800">Book Appointment</h3>
+                    <p className="text-sm text-gray-600">Find and book with doctors</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-800">Book Appointment</h3>
-                <p className="text-sm text-gray-600">Find and book with doctors</p>
-              </div>
-            </div>
-          </div>
+            </Link>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+          <Link href="/patient/appointments">
+            <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-green-100 rounded-lg">
                 <Clock className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">My Appointments</h3>
+                <h3 className="font-semibold text-gray-800">My Appointments : {MyAppointments.length}</h3>
                 <p className="text-sm text-gray-600">View upcoming visits</p>
               </div>
             </div>
           </div>
+          </Link>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+           <Link href="/patient/profile">
+              <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-purple-100 rounded-lg">
                 <User className="w-6 h-6 text-purple-600" />
@@ -72,16 +99,26 @@ export default function PatientDashboard() {
               </div>
             </div>
           </div>
+           </Link>
         </div>
 
         {/* Recent Activity */}
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h3>
-          <div className="text-center py-8 text-gray-500">
+          {!contentThere?(
+            <div className="text-center py-8 text-gray-500">
             <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>No recent appointments</p>
             <p className="text-sm">Book your first appointment to get started!</p>
           </div>
+          ):(
+             <div>
+                <h3> Coming Appointments</h3>
+                {MyAppointments.map((appoint)=>(
+                  <TinyAppointmentCard doctorName={appoint.doctorVisit.doctor.name} time={appoint.time} date={appoint.date}/>
+                ))}
+             </div>
+          )}
         </div>
       </main>
       </div>
