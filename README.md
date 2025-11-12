@@ -1,4 +1,12 @@
-# 🩺 Mediocure — Healthcare Appointments Made Simple
+<p align="center">
+  <img src="public/betterlogo.jpg" width="80" alt="Mediocure logo">
+</p>
+
+<h1 align="center">🩺 Mediocure</h1>
+<p align="center">
+  Healthcare Appointments Made Simple
+</p>
+
 
 > **Connect patients with doctors seamlessly.**  
 > Book appointments instantly, manage schedules effortlessly, and focus on what matters most — your health.
@@ -79,9 +87,9 @@ Cloud-hosted PostgreSQL database for reliability and scalability.
 
 | View | Preview |
 |------|----------|
-| 🔐 Google Login | ![Google Login](/Screenshots/PatientLogin.gif) |
-| 🏥 Clinic Creating Visit | ![Clinic VisitCreating](/Screenshots/ClinicCreatingVisit.gif) |
-| 👨‍⚕️ Patient Booking | ![Patient Booking](/Screenshots/PatientBookingVisit.gif) |
+| 🔐 Google Login | ![Google Login](Screenshots/PatientLogin.gif) |
+| 🏥 Clinic Creating Visit | ![Clinic VisitCreating](Screenshots/ClinicCreatingVisit.gif) |
+| 👨‍⚕️ Patient Booking | ![Patient Booking](Screenshots/PatientBookingVisit.gif) |
 
 ---
 
