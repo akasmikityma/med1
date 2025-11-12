@@ -50,7 +50,7 @@ export function useDoctorVisits() {
   const [visits, setVisits] = useRecoilState(doctorVisitsState);
   const setLoading = useSetRecoilState(createVisitLoadingState);
   const [error, setError] = useRecoilState(atom<string | null>({
-    key: 'doctors/errorState',
+    key: 'doctors/errorStatee',
     default: null,
   }));
 
