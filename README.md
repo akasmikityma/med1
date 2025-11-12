@@ -1,41 +1,153 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🩺 Mediocure — Healthcare Appointments Made Simple
 
-## Getting Started
+> **Connect patients with doctors seamlessly.**  
+> Book appointments instantly, manage schedules effortlessly, and focus on what matters most — your health.
 
-First, run the development server:
+---
+
+## 🌐 Live Demo
+
+🔗 **[Visit Mediocure on Vercel](https://mediocure.vercel.app)**  
+*(Deployed with NeonDB as backend database)*
+
+---
+
+## 🚀 Overview
+
+**Mediocure** is a full-stack healthcare appointment management web app built with **Next.js 14 (App Router)**, **TypeScript**, and **Prisma ORM**.  
+It bridges the gap between **clinics** and **patients**, making the process of booking and managing doctor visits intuitive and efficient.
+
+---
+
+## ✨ Features
+
+✅ **Role-based access**  
+Different dashboards for **clinics** and **patients**.
+
+✅ **Clinic dashboard**  
+Manage visiting doctors, appointments, and patient records.
+
+✅ **Doctor visiting schedules**  
+Clinics can add and manage doctors' visiting days and hours.
+
+✅ **Patient booking system**  
+Patients can view available visits and instantly book appointments.
+
+✅ **Google Authentication (NextAuth)**  
+Secure and seamless login using Google accounts.
+
+✅ **Real-time appointment tracking**  
+Clinics and patients can both see live updates for bookings.
+
+✅ **NeonDB + Prisma**  
+Cloud-hosted PostgreSQL database for reliability and scalability.
+
+---
+
+## 🧠 Tech Stack
+
+| Layer | Technology |
+|--------|-------------|
+| **Frontend** | Next.js 14 (App Router) + React + TypeScript + Tailwind CSS |
+| **State Management** | Recoil |
+| **Auth** | NextAuth.js (Google OAuth) |
+| **Backend / ORM** | Prisma ORM |
+| **Database** | PostgreSQL (hosted on NeonDB) |
+| **Hosting** | Vercel |
+| **Language** | TypeScript |
+
+---
+
+## 📁 Project Structure
+
+<pre>
+├── prisma/ # Prisma schema & migrations
+├── app/ # App Router (Next.js)
+│ ├── api/ # Server routes (Next.js server actions)
+│ ├── clinic/ # Clinic dashboard pages
+│ ├── patient/ # Patient dashboard pages
+│ └── ...
+├── lib/ # Auth, Prisma, and utility functions
+├── components/ # Reusable UI components
+├── public/ # Static assets (logos, icons)
+└── README.md
+<pre>
+
+---
+
+## 🖼️ Screenshots
+
+| View | Preview |
+|------|----------|
+| 🔐 Google Login | ![Google Login](/Screenshots/PatientLogin.gif) |
+| 🏥 Clinic Creating Visit | ![Clinic VisitCreating](/Screenshots/ClinicCreatingVisit.gif) |
+| 👨‍⚕️ Patient Booking | ![Patient Booking](/Screenshots/PatientBookingVisit.gif) |
+
+---
+
+## 🧰 Setup Instructions
+
+### 1️⃣ Clone the repository
 
 ```bash
+git clone https://github.com/akasmikityma/med1.git
+cd med1
+2️⃣ Install dependencies
+npm install
+3️⃣ Set up environment variables
+
+Create a .env file in the project root:
+
+DATABASE_URL="postgresql://<your-neon-connection-url>"
+GOOGLE_CLIENT_ID="<your-client-id>"
+GOOGLE_CLIENT_SECRET="<your-client-secret>"
+NEXTAUTH_SECRET="<any-random-string>"
+NEXTAUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+
+4️⃣ Run Prisma migrations
+npx prisma migrate dev
+
+5️⃣ Start the dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then visit ➜ http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+☁️ Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This app is hosted on Vercel, with the database managed by NeonDB.
+To deploy your own instance:
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Push your code to GitHub.
+Import the repo in Vercel Dashboard.
+Add all environment variables (same as in .env).
 
 
-# at doctors .. how often is it hitting the database ??? 
+Deploy 🚀
 
-# i want the doctors visits in one atom >> 
+After your first deploy:
+Update NEXTAUTH_URL and NEXT_PUBLIC_SITE_URL to your production URL (e.g. https://mediocure.vercel.app)
+Update Google OAuth redirect URIs in Google Cloud Console accordingly:
+
+https://mediocure.vercel.app/api/auth/callback/google
+
+
+🧩 Future Enhancements / TODOs
+
+💬 Video consultations via WebRTC
+💳 Payment integration (Stripe)
+📊 Admin analytics dashboard
+🕒 Appointment reminders (SMS / email)
+
+
+📱 Mobile-first PWA version
+
+
+👨‍💻 Author
+Bishal Maity
+🌍 GitHub
+🧠 Full-stack developer passionate about scalable web systems, AI, and product design.
+
+📄 License
+
+This project is open source under the MIT License.
